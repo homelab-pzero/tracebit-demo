@@ -1,0 +1,64 @@
+# A supply-chain attack, staged. Run it from the Actions tab (Run workflow).
+#
+# build:    the normal pipeline, except a dependency update pulled in telemetry-helper@2.0.1,
+#           whose postinstall hook sweeps ~/.aws, the environment and ~/.ssh and exfiltrates
+#           what it finds (attack/telemetry-helper/harvest.js).
+# attacker: a different machine, after the build has finished, tries the stolen keys
+#           (attack/use-loot.sh). With Tracebit covering the build job, they are canaries and
+#           the attempt raises an alert naming this repo, workflow, commit and run.
+#
+# The loot travels as an artifact that the attacker job deletes as soon as it has read it.
+name: Simulated supply-chain compromise
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write # the attacker job deletes the loot artifact
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: npm ci
+      - name: Install the compromised dependency update (telemetry-helper@2.0.1)
+        # Packed first: npm installs a tarball like a registry package, install hooks included.
+        run: |
+          tgz="$(npm pack ./attack/telemetry-helper --pack-destination "$RUNNER_TEMP" | tail -1)"
+          npm install --no-save --foreground-scripts "$RUNNER_TEMP/$tgz"
+        env:
+          LOOT_PATH: ${{ runner.temp }}/loot.json
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: loot
+          path: ${{ runner.temp }}/loot.json
+          retention-days: 1
+          if-no-files-found: error
+
+  attacker:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: loot
+          path: ${{ runner.temp }}/loot
+      - name: Delete the loot artifact
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          id="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID/artifacts" --jq '.artifacts[] | select(.name == "loot") | .id')"
+          [ -n "$id" ] && gh api -X DELETE "repos/$GITHUB_REPOSITORY/actions/artifacts/$id"
+      - name: Use the stolen credentials
+        run: bash attack/use-loot.sh "$RUNNER_TEMP/loot/loot.json"
