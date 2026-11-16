@@ -41,10 +41,11 @@ and tries them elsewhere.
    The build log shows the payload finding nothing worth stealing, and the attacker job
    reports "no canaries to steal". Nobody is alerted, which is also what happens when the
    payload *does* find real keys.
-2. **Turn Tracebit on.** Add this repository to the Tracebit Community Edition GitHub App.
-   Tracebit opens a pull request, "Cover new GitHub workflows with Tracebit Community
-   Edition Canaries", that adds its step to both workflows. Review the diff and merge it.
-   The dashboard now shows 100% coverage.
+2. **Turn Tracebit on.** With the repository added to the Tracebit Community Edition GitHub
+   App, the Tracebit portal offers to cover its workflows and opens a pull request, "Cover
+   new GitHub workflows with Tracebit Community Edition Canaries", that adds its step to
+   both workflows. Review the diff and merge it. The dashboard now shows full coverage.
+   (Fallback: the draft PR from branch `tracebit-canaries` adds the same step.)
 3. **Attack again.** Run *Simulated supply-chain compromise* again. The build log shows
    the payload collecting the `administrator` AWS profile, the `__AWS__*` variables and the
    SSH key. The attacker job then tries them from another machine.
