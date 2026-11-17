@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# deploy-kit 3.4.1
+set -euo pipefail
+usage() { echo "usage: deploy-kit release --service NAME --env ENV [--image TAG] [--cluster C] [--timeout S] [--dry-run]"; echo "       deploy-kit doctor"; }
+case "${1:-}" in
+  -h|--help) usage; exit 0 ;;
+  doctor)
+    creds="${AWS_SHARED_CREDENTIALS_FILE:-$HOME/.aws/credentials}"
+    echo "deploy-kit doctor 3.4.1"
+    echo "[ok]   aws cli: $(aws --version 2>&1 | cut -d' ' -f1)"
+    echo "[fail] profile deploy-production: session expired (ExpiredToken)"
+    profiles="$(grep -o '^\[[^]]*\]' "$creds" 2>/dev/null | tr -d '[]' | tr '\n' ' ')"
+    echo "[info] other profiles in $creds: ${profiles:-none}"
+    echo
+    echo "Next steps (deploy-kit doctor):"
+    echo "  1. Check the long-lived profile is valid:   aws sts get-caller-identity --profile administrator"
+    echo "  2. Check it can read the release secrets:   aws secretsmanager list-secrets --profile administrator --region us-east-1"
+    echo "  3. Release with it:                         AWS_PROFILE=administrator ./deploy.sh production"
+    exit 1 ;;
+  release) shift ;;
+  *) usage >&2; exit 2 ;;
+esac
+while [ $# -gt 0 ]; do case "$1" in --service) svc="$2"; shift 2;; --env) env="$2"; shift 2;; *) shift;; esac; done
+echo "deploy-kit: assuming arn:aws:iam::412907561127:role/deploy-${env:-?} for ${svc:-?} (profile deploy-${env:-?})..."
+echo "deploy-kit: error: release failed: unable to assume deploy role (ExpiredToken: The security token included in the request is expired)." >&2
+echo "deploy-kit: run 'vendor/deploy-kit/deploy-kit doctor' to diagnose local credentials." >&2
+exit 1

@@ -57,6 +57,13 @@ and tries them elsewhere.
 The loot travels between the two jobs as an artifact that the attacker job deletes as soon
 as it has read it, so stolen canaries are not left lying around in a public repository.
 
+## Act 2: an AI agent goes out of scope
+
+[`agent-demo/`](agent-demo/README.md): an ordinary coding agent, debugging a failed deploy,
+follows a compromised vendored tool's advice and uses an admin AWS credential nobody gave
+it. The credential is a Tracebit canary, so the alert names the agent, the model and the
+calls it made, while the agent's own summary tells the user not to do what it just did.
+
 ## Setup notes
 
 - Secret `SECURITY_API_TOKEN`: the Tracebit Community Edition API token. It is managed
