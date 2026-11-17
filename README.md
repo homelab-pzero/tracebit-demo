@@ -22,7 +22,7 @@ plus a staged supply-chain attack that shows them catching a credential thief.
 The `tracebit-com/tracebit-community-action` step runs right after checkout. It issues a
 fresh set of canary credentials for each run:
 
-- an AWS profile `administrator` in `~/.aws/credentials`, also in environment variables and in process memory
+- an AWS profile `admin` in `~/.aws/credentials`, also in environment variables and in process memory
 - an SSH key in `~/.ssh` with a matching `~/.ssh/config` host entry
 
 When the job finishes, the action tells Tracebit that the run ended normally. Any later
@@ -44,14 +44,15 @@ and tries them elsewhere.
 2. **Turn Tracebit on.** With the repository added to the Tracebit Community Edition GitHub
    App, the Tracebit portal offers to cover its workflows and opens a pull request, "Cover
    new GitHub workflows with Tracebit Community Edition Canaries", that adds its step to
-   both workflows. Review the diff and merge it. The dashboard now shows full coverage.
-   (Fallback: the draft PR from branch `tracebit-canaries` adds the same step.)
+   both workflows (here PR #2). Review the diff and merge it. The dashboard now shows
+   full coverage.
 3. **Attack again.** Run *Simulated supply-chain compromise* again. The build log shows
-   the payload collecting the `administrator` AWS profile, the `__AWS__*` variables and the
+   the payload collecting the `admin` AWS profile, the `__AWS__*` variables and the
    SSH key. The attacker job then tries them from another machine.
 4. **The alert.** The Tracebit dashboard (and email) shows the canary use, tied to this
    repository, the *Simulated supply-chain compromise* workflow, the `build` job, the
-   commit and the run ID. You know which pipeline leaked, and when, before anyone has
+   commit and the run ID, about five minutes later (AWS alerts come through CloudTrail).
+   You know which pipeline leaked, and when, before anyone has
    touched a real credential.
 
 The loot travels between the two jobs as an artifact that the attacker job deletes as soon
